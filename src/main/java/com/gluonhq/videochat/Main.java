@@ -75,17 +75,6 @@ public class Main extends Application {
         Scene scene = new Scene(root, 640, 480);
         stage.setScene(scene);
         stage.show();
-//        Thread t = new Thread() {
-//            @Override
-//            public void run() {
-//                try {
-//                    connect();
-//                } catch (Throwable t) {
-//                    t.printStackTrace();
-//                }
-//            }
-//        };
-//        t.start();
     }
     PeerConnectionFactory pcf;
     RTCPeerConnection peerConnection;
