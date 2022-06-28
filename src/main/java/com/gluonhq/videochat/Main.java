@@ -34,6 +34,7 @@ import dev.onvoid.webrtc.media.video.VideoTrackSink;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -56,6 +57,7 @@ public class Main extends Application {
     private static String dest;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     MySetSessionDescriptionObserver mySetSessionDescriptionObserver = new MySetSessionDescriptionObserver();
+    private static List<RTCIceCandidate> iceCandidates = new LinkedList<>();
 
     @Override
     public void start(Stage stage) {
@@ -103,6 +105,8 @@ public class Main extends Application {
             Signaling.writeAnswer(localDescription.sdp);
             Files.writeString(Path.of("/tmp/answer"), localDescription.sdp);
             LOG.info("Answer is written");
+            System.err.println("NOW SEND/RECEIVE ICECANDIDATES: "+iceCandidates);
+
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -146,6 +150,7 @@ public class Main extends Application {
             LOG.info("Created desc for answer, set as remote description");
             peerConnection.setRemoteDescription(description, mySetSessionDescriptionObserver);
             LOG.info("Done processing answer");
+            System.err.println("NOW SEND ICECANDIDATES: "+iceCandidates);
         } catch (Throwable ex) {
             ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -299,10 +304,8 @@ public class Main extends Application {
 
         @Override
         public void onIceCandidate(RTCIceCandidate candidate) {
-            LOG.severe("NYI");
+            Main.iceCandidates.add(candidate);
             LOG.info("new candidate: " + candidate);
-          //  RTCIceCandidate c2 = new RTCIceCandidate();
-            throw new RuntimeException("Not implemented");
         }
 
     }
