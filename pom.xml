@@ -56,6 +56,9 @@
                 <version>${javafx.plugin.version}</version>
                 <configuration>
                     <mainClass>${main.class}</mainClass>
+                    <options>
+                        <option>-Ddest=${dest}</option>
+                    </options>
                 </configuration>
             </plugin>
             <plugin>

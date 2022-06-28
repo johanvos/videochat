@@ -204,6 +204,8 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        String dest = System.getProperty("dest");
+        System.err.println("Destination = "+dest);
         launch(args);
     }
 
@@ -302,6 +304,7 @@ public class Main extends Application {
         public void onIceCandidate(RTCIceCandidate candidate) {
             LOG.severe("NYI");
             LOG.info("new candidate: " + candidate);
+          //  RTCIceCandidate c2 = new RTCIceCandidate();
             throw new RuntimeException("Not implemented");
         }
 
