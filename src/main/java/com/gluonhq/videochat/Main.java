@@ -136,8 +136,11 @@ public class Main extends Application {
         LOG.info("That's pcf");
         try {
             Files.writeString(Path.of("/tmp/rcv"), localDescription.sdp);
+            LOG.info("wrote file");
             Signaling.connect(dest);
+            LOG.info("Connected to "+dest);
             Signaling.writeOffer(localDescription.sdp);
+            LOG.info("wrote offer");
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }

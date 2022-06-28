@@ -7,6 +7,8 @@ package com.gluonhq.videochat;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.CountDownLatch;
@@ -29,7 +31,10 @@ public class Signaling {
             @Override public void run() {
                 try {
                     Socket socket = new Socket(dest, PORT);
-                    dos = new DataOutputStream(socket.getOutputStream());
+                    OutputStream os = socket.getOutputStream();
+                    InputStream is = socket.getInputStream();
+                    dos = new DataOutputStream(os);
+                    dis = new DataInputStream(is);
                 } catch (IOException ex) {
                     Logger.getLogger(Signaling.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -48,7 +53,10 @@ public class Signaling {
                 try {
                     ServerSocket ss = new ServerSocket(PORT);
                     Socket s = ss.accept();
-                    dis = new DataInputStream(s.getInputStream());
+                    OutputStream os = s.getOutputStream();
+                    InputStream is = s.getInputStream();
+                    dos = new DataOutputStream(os);
+                    dis = new DataInputStream(is);
                     cdl.countDown();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -65,10 +73,16 @@ public class Signaling {
     
     public static void writeOffer(String o) {
         try {
-            o.getBytes();
+            
+            System.err.println("[WO] writing "+o.length());
             dos.writeInt(o.length());
+            System.err.println("[WO] writing bytes");
             dos.write(o.getBytes());
-        } catch (IOException ex) {
+            System.err.println("[WO] flush dos");
+            dos.flush();
+            System.err.println("[WO] DONE sending offer");
+        } catch (Throwable ex) {
+            ex.printStackTrace();
             Logger.getLogger(Signaling.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
