@@ -99,7 +99,7 @@ public class Main extends Application {
             RTCConfiguration config = new RTCConfiguration();
             peerConnection = pcf.createPeerConnection(config, mpco);
             Signaling.listen();
-            String spd = Signaling.getOffer();
+            String spd = Signaling.readOffer();
            // String spd = Files.readString(Path.of("/tmp/rcv"));
          //   LOG.info("input = " + spd);
             RTCSessionDescription description = new RTCSessionDescription(RTCSdpType.OFFER, spd);
@@ -111,6 +111,7 @@ public class Main extends Application {
             peerConnection.createAnswer(options, sdobs);
             RTCSessionDescription localDescription = sdobs.getDescription();
             peerConnection.setLocalDescription(localDescription, mssdo);
+            Signaling.writeAnswer(localDescription.sdp);
             Files.writeString(Path.of("/tmp/answer"), localDescription.sdp);
             LOG.info("Answer is written");
         } catch (Throwable e) {
@@ -148,8 +149,10 @@ public class Main extends Application {
 
     private void processAnswer() {
         try {
+            
             LOG.info("Processing answer");
-            String spd = Files.readString(Path.of("/tmp/answer"));
+//            String spd = Files.readString(Path.of("/tmp/answer"));
+            String spd = Signaling.readAnswer();
             RTCSessionDescription description = new RTCSessionDescription(RTCSdpType.ANSWER, spd);
             LOG.info("Created desc for answer, set as remote description");
             peerConnection.setRemoteDescription(description, mySetSessionDescriptionObserver);
