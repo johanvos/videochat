@@ -53,6 +53,7 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
+    private static String dest;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     MySetSessionDescriptionObserver mySetSessionDescriptionObserver = new MySetSessionDescriptionObserver();
 
@@ -97,7 +98,9 @@ public class Main extends Application {
             MySetSessionDescriptionObserver mssdo = new MySetSessionDescriptionObserver();
             RTCConfiguration config = new RTCConfiguration();
             peerConnection = pcf.createPeerConnection(config, mpco);
-            String spd = Files.readString(Path.of("/tmp/rcv"));
+            Signaling.listen();
+            String spd = Signaling.getOffer();
+           // String spd = Files.readString(Path.of("/tmp/rcv"));
          //   LOG.info("input = " + spd);
             RTCSessionDescription description = new RTCSessionDescription(RTCSdpType.OFFER, spd);
      //       LOG.info(Thread.currentThread()+"created sessiondesc with spd = "+description.sdp);
@@ -133,9 +136,8 @@ public class Main extends Application {
         LOG.info("That's pcf");
         try {
             Files.writeString(Path.of("/tmp/rcv"), localDescription.sdp);
-//        pcf.
-//        RTCPeerConnection rpc;
-//        RTCPeerConnectionFactory.
+            Signaling.connect(dest);
+            Signaling.writeOffer(localDescription.sdp);
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -204,7 +206,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        String dest = System.getProperty("dest");
+        dest = System.getProperty("dest");
         System.err.println("Destination = "+dest);
         launch(args);
     }
