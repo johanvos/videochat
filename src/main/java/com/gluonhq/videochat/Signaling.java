@@ -123,6 +123,7 @@ public class Signaling {
                 String serverUrl = readLine();
                 int sdpMLineIndex = dis.readInt();
                 RTCIceCandidate candidate = new RTCIceCandidate(sdpMid, sdpMLineIndex, sdp, serverUrl);
+                answer.add(candidate);
             }
         } catch (IOException ex) {
             Logger.getLogger(Signaling.class.getName()).log(Level.SEVERE, null, ex);

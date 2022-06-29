@@ -105,10 +105,12 @@ public class Main extends Application {
             Signaling.writeAnswer(localDescription.sdp);
             Files.writeString(Path.of("/tmp/answer"), localDescription.sdp);
             LOG.info("Answer is written");
-            List<RTCIceCandidate> otherIceCandidates = Signaling.readIceCandidates();
-            System.err.println("received ice = "+otherIceCandidates);
+            List<RTCIceCandidate> receivedIce = Signaling.readIceCandidates();
+            System.err.println("received ice = "+receivedIce);
             Signaling.writeIceCandidates(iceCandidates);
-            System.err.println("NOW SEND/RECEIVE ICECANDIDATES: "+iceCandidates);
+            System.err.println("Done SEND/RECEIVE ICECANDIDATES: "+iceCandidates);
+            processIceCandidate(receivedIce);
+
 
         } catch (Throwable e) {
             e.printStackTrace();
@@ -155,11 +157,19 @@ public class Main extends Application {
             LOG.info("Done processing answer");
             System.err.println("NOW SEND ICECANDIDATES: "+iceCandidates);
             Signaling.writeIceCandidates(iceCandidates);
+            System.err.println("and now read icecandidates... ");
+            List<RTCIceCandidate> receivedIce = Signaling.readIceCandidates();
+            processIceCandidate(receivedIce);
         } catch (Throwable ex) {
             ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
 
+    private void processIceCandidate(List<RTCIceCandidate> candidates) {
+        for (RTCIceCandidate candidate: candidates) {
+            peerConnection.addIceCandidate(candidate);
+        }
     }
     private void processAudioDevice() {
         List<AudioDevice> audioCaptureDevices = MediaDevices.getAudioCaptureDevices();
