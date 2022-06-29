@@ -15,12 +15,14 @@ import dev.onvoid.webrtc.RTCPeerConnectionIceErrorEvent;
 import dev.onvoid.webrtc.RTCPeerConnectionState;
 import dev.onvoid.webrtc.RTCRtpReceiver;
 import dev.onvoid.webrtc.RTCRtpTransceiver;
+import dev.onvoid.webrtc.RTCRtpTransceiverDirection;
 import dev.onvoid.webrtc.RTCSdpType;
 import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.RTCSignalingState;
 import dev.onvoid.webrtc.SetSessionDescriptionObserver;
 import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.MediaStream;
+import dev.onvoid.webrtc.media.MediaStreamTrack;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
@@ -89,6 +91,8 @@ public class Main extends Application {
             MySetSessionDescriptionObserver mssdo = new MySetSessionDescriptionObserver();
             RTCConfiguration config = new RTCConfiguration();
             peerConnection = pcf.createPeerConnection(config, mpco);
+            processAudioDevice();
+            processVideoDevice();
             Signaling.listen();
             String spd = Signaling.readOffer();
            // String spd = Files.readString(Path.of("/tmp/rcv"));
@@ -192,6 +196,7 @@ public class Main extends Application {
             }
         });
         peerConnection.addTrack(audioTrack, List.of("stream"));
+        List<AudioDevice> audioRenderDevices = MediaDevices.getAudioRenderDevices();
     }
 
     private void processVideoDevice() {
@@ -219,13 +224,25 @@ public class Main extends Application {
         peerConnection.addTrack(videoTrack, List.of("stream"));
     }
 
-    public static void main(String[] args) {
+    void startStreaming(RTCRtpTransceiverDirection direction) {
+        for (RTCRtpTransceiver transceiver : peerConnection.getTransceivers()) {
+            System.err.println("consider transceiver "+transceiver);
+            MediaStreamTrack track = transceiver.getSender().getTrack();
+            System.err.println("consider track "+track);
+            if ((track != null) && track.getKind().equals(MediaStreamTrack.AUDIO_TRACK_KIND)) {
+                transceiver.setDirection(direction);
+                break;
+            }
+        }
+    }
+
+    public static void main(String[] args) {        
         dest = System.getProperty("dest");
         System.err.println("Destination = "+dest);
         launch(args);
     }
 
-    static class MyPeerConnectionObserver implements PeerConnectionObserver {
+    class MyPeerConnectionObserver implements PeerConnectionObserver {
 
         @Override
         public void onTrack(RTCRtpTransceiver transceiver) {
@@ -307,6 +324,9 @@ public class Main extends Application {
         @Override
         public void onConnectionChange(RTCPeerConnectionState state) {
             LOG.info("Connection changed to "+state);
+            if (state.equals(RTCPeerConnectionState.CONNECTED)) {
+                startStreaming(RTCRtpTransceiverDirection.SEND_RECV);
+            }
         }
 
         @Override
