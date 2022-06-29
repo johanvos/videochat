@@ -4,6 +4,7 @@
  */
 package com.gluonhq.videochat;
 
+import dev.onvoid.webrtc.RTCIceCandidate;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,6 +12,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -92,7 +95,41 @@ public class Signaling {
     public static void writeOffer(String o) {
         writeLine(o);
     }
+    
+    public static void writeIceCandidates(List<RTCIceCandidate> can) {
+        try {
+            int len = can.size();
+            dos.writeInt(len);
+            for (int i = 0; i < len; i++) {
+                RTCIceCandidate candidate = can.get(i);
+                writeLine(candidate.sdp);
+                writeLine(candidate.sdpMid);
+                writeLine(candidate.serverUrl);
+                dos.writeInt(candidate.sdpMLineIndex);
+            }
+            dos.flush();
+        } catch (IOException ex) {
+            Logger.getLogger(Signaling.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
+    public static List<RTCIceCandidate> readIceCandidates() {
+        List<RTCIceCandidate> answer = new LinkedList<>();
+        try {
+            int len = dis.readInt();
+            for (int i = 0; i < len; i++) {
+                String sdp = readLine();
+                String sdpMid = readLine();
+                String serverUrl = readLine();
+                int sdpMLineIndex = dis.readInt();
+                RTCIceCandidate candidate = new RTCIceCandidate(sdpMid, sdpMLineIndex, sdp, serverUrl);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Signaling.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return answer;
+    }
+    
     public static String readOffer() {
         return readLine();
     }

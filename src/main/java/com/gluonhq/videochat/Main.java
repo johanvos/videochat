@@ -105,6 +105,9 @@ public class Main extends Application {
             Signaling.writeAnswer(localDescription.sdp);
             Files.writeString(Path.of("/tmp/answer"), localDescription.sdp);
             LOG.info("Answer is written");
+            List<RTCIceCandidate> otherIceCandidates = Signaling.readIceCandidates();
+            System.err.println("received ice = "+otherIceCandidates);
+            Signaling.writeIceCandidates(iceCandidates);
             System.err.println("NOW SEND/RECEIVE ICECANDIDATES: "+iceCandidates);
 
         } catch (Throwable e) {
@@ -151,6 +154,7 @@ public class Main extends Application {
             peerConnection.setRemoteDescription(description, mySetSessionDescriptionObserver);
             LOG.info("Done processing answer");
             System.err.println("NOW SEND ICECANDIDATES: "+iceCandidates);
+            Signaling.writeIceCandidates(iceCandidates);
         } catch (Throwable ex) {
             ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
