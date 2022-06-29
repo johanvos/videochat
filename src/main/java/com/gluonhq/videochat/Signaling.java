@@ -136,9 +136,14 @@ public class Signaling {
 
     private static void writeLine(String o) {
         try {
-            dos.writeInt(o.length());
-            dos.write(o.getBytes());
-            dos.flush();
+            if (o == null) {
+                dos.writeInt(0);
+                dos.flush();
+            } else {
+                dos.writeInt(o.length());
+                dos.write(o.getBytes());
+                dos.flush();
+            }
         } catch (Throwable ex) {
             ex.printStackTrace();
             Logger.getLogger(Signaling.class.getName()).log(Level.SEVERE, null, ex);
@@ -148,6 +153,7 @@ public class Signaling {
     private static String readLine() {
         try {
             int len = dis.readInt();
+            if (len == 0) return null;
             byte[] b = new byte[len];
             int read = dis.read(b);
             String off = new String(b);
