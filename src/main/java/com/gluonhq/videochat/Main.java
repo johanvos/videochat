@@ -301,14 +301,12 @@ public class Main extends Application {
 
         @Override
         public void onIceConnectionChange(RTCIceConnectionState state) {
-            LOG.info("New iceConnectionChange = "+state);
-            LOG.severe("NYI");
+            LOG.info("iceConnectionChanged to "+state);
         }
 
         @Override
         public void onConnectionChange(RTCPeerConnectionState state) {
-            LOG.severe("NYI");
-            throw new RuntimeException("Not implemented");
+            LOG.info("Connection changed to "+state);
         }
 
         @Override
