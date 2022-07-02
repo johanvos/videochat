@@ -58,7 +58,6 @@ public class Main extends Application {
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
     private static String dest;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    MySetSessionDescriptionObserver mySetSessionDescriptionObserver = new MySetSessionDescriptionObserver();
     private static List<RTCIceCandidate> iceCandidates = new LinkedList<>();
 
     @Override
@@ -88,7 +87,7 @@ public class Main extends Application {
             LOG.info("create pcf");
             pcf = new PeerConnectionFactory();
             MyPeerConnectionObserver mpco = new MyPeerConnectionObserver();
-            MySetSessionDescriptionObserver mssdo = new MySetSessionDescriptionObserver();
+            MySetSessionDescriptionObserver mssdo = new MySetSessionDescriptionObserver("remote");
             RTCConfiguration config = new RTCConfiguration();
             peerConnection = pcf.createPeerConnection(config, mpco);
             processAudioDevice();
@@ -101,11 +100,15 @@ public class Main extends Application {
      //       LOG.info(Thread.currentThread()+"created sessiondesc with spd = "+description.sdp);
             peerConnection.setRemoteDescription(description, mssdo);
             LOG.info("Peer has remote desc");
+            
+//            
             RTCAnswerOptions options = new RTCAnswerOptions();
             MyCreateSessionDescriptionObserver sdobs = new MyCreateSessionDescriptionObserver(peerConnection, true);
             peerConnection.createAnswer(options, sdobs);
             RTCSessionDescription localDescription = sdobs.getDescription();
-            peerConnection.setLocalDescription(localDescription, mssdo);
+            MySetSessionDescriptionObserver mssdo2 = new MySetSessionDescriptionObserver("local");
+
+            peerConnection.setLocalDescription(localDescription, mssdo2);
             Signaling.writeAnswer(localDescription.sdp);
             Files.writeString(Path.of("/tmp/answer"), localDescription.sdp);
             LOG.info("Answer is written");
@@ -129,7 +132,7 @@ public class Main extends Application {
         peerConnection = pcf.createPeerConnection(config, mpco);
         processAudioDevice();
         processVideoDevice();
-
+MySetSessionDescriptionObserver mySetSessionDescriptionObserver = new MySetSessionDescriptionObserver("local");
         RTCOfferOptions options = new RTCOfferOptions();
         MyCreateSessionDescriptionObserver mcsdo = new MyCreateSessionDescriptionObserver(peerConnection, true);
         peerConnection.createOffer(options, mcsdo);
@@ -157,6 +160,8 @@ public class Main extends Application {
             String spd = Signaling.readAnswer();
             RTCSessionDescription description = new RTCSessionDescription(RTCSdpType.ANSWER, spd);
             LOG.info("Created desc for answer, set as remote description");
+            MySetSessionDescriptionObserver mySetSessionDescriptionObserver = new MySetSessionDescriptionObserver("remote answer");
+
             peerConnection.setRemoteDescription(description, mySetSessionDescriptionObserver);
             LOG.info("Done processing answer");
             System.err.println("NOW SEND ICECANDIDATES: "+iceCandidates);
@@ -226,7 +231,7 @@ public class Main extends Application {
 
     void startStreaming(RTCRtpTransceiverDirection direction) {
         for (RTCRtpTransceiver transceiver : peerConnection.getTransceivers()) {
-            System.err.println("consider transceiver "+transceiver);
+            System.err.println("consider transceiver "+transceiver+" with sendre = "+transceiver.getSender());
             MediaStreamTrack track = transceiver.getSender().getTrack();
             System.err.println("consider track "+track);
             if ((track != null) && track.getKind().equals(MediaStreamTrack.AUDIO_TRACK_KIND)) {
@@ -302,6 +307,7 @@ public class Main extends Application {
         public void onIceGatheringChange(RTCIceGatheringState state) {
             LOG.severe("NYI");
             System.err.println("iceGatheringState changed to " + state);
+            Thread.dumpStack();
         }
 
         @Override
@@ -357,8 +363,7 @@ public class Main extends Application {
 
         @Override
         public void onSuccess(RTCSessionDescription description) {
-            LOG.info("got description " + description);
-            MySetSessionDescriptionObserver mssdo = new MySetSessionDescriptionObserver();
+            LOG.info("MCSDO success got description " + description.sdpType);
             cdl.countDown();
             this.description = description;
 //            if (local) {
@@ -386,14 +391,20 @@ public class Main extends Application {
 
     static class MySetSessionDescriptionObserver implements SetSessionDescriptionObserver {
 
+        private final String name;
+
+        public MySetSessionDescriptionObserver(String name) {
+            this.name = name;
+        }
+
         @Override
         public void onSuccess() {
-            LOG.info("SetSessionDescription success");
+            LOG.info("MSSDO SetSessionDescription success for "+name);
         }
 
         @Override
         public void onFailure(String error) {
-            LOG.info("SetSessionDescription failed with " + error);
+            LOG.info("SetSessionDescription failed for " + name+" with " + error);
         }
 
     }
